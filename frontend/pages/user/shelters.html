@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Shelter - FloodResponse</title>
+    <link rel="stylesheet" href="../../css/main.css">
+    <link rel="stylesheet" href="../../css/components.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <nav>
+                <div class="logo">
+                    <i class="fas fa-water"></i>
+                    FloodResponse
+                </div>
+                <ul class="nav-links">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="forecast.html">Forecasts</a></li>
+                    <li><a href="alerts.html">Alerts</a></li>
+                    <li><a href="shelters.html" class="active">Shelters</a></li>
+                    <li><a href="helpline.html">Helpline</a></li>
+                    <li><a href="report.html" class="btn btn-primary">Report Emergency</a></li>
+                </ul>
+                <div class="mobile-menu-btn">
+                    <i class="fas fa-bars"></i>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container mt-4">
+        <div class="text-center mb-4">
+            <h1>Evacuation Shelter Finder</h1>
+            <p class="text-muted">Locate safe shelters and evacuation points near you.</p>
+        </div>
+
+        <div class="search-bar">
+            <input type="text" class="search-input" placeholder="Enter your location...">
+            <button class="btn btn-primary" id="locate-btn"><i class="fas fa-location-arrow"></i> Use My
+                Location</button>
+        </div>
+
+        <div id="map"></div>
+
+        <div class="mt-5">
+            <h2>Nearby Shelters List</h2>
+            <div class="card-grid" id="shelters-list">
+                <!-- Shelter cards will be populated here -->
+                <div class="text-center" style="grid-column: 1/-1;">
+                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                    <p>Loading shelters...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <div class="copyright">
+                <p>&copy; 2025 Flood Forecasting & Response System. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="../../js/utils.js"></script>
+    <script src="../../js/api.js"></script>
+    <script src="../../js/map.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Initialize map centered on Lahore for demo
+            const map = mapUtils.initMap('map', 31.5204, 74.3587, 12);
+            const sheltersList = document.getElementById('shelters-list');
+
+            try {
+                // Fetch shelters from API
+                const shelters = await api.getShelters();
+
+                // Clear loading state/static content
+                sheltersList.innerHTML = '';
+
+                shelters.forEach(shelter => {
+                    // Add marker to map
+                    mapUtils.addMarker(
+                        shelter.latitude,
+                        shelter.longitude,
+                        `<b>${shelter.name}</b><br>Capacity: ${shelter.capacity}<br>Contact: ${shelter.contactNumber}`
+                    );
+
+                    // Add card to list
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.innerHTML = `
+                        <h3><i class="fas fa-campground text-primary"></i> ${shelter.name}</h3>
+                        <p class="text-muted"><i class="fas fa-map-marker-alt"></i> ${shelter.address}</p>
+                        <div class="mt-2">
+                            <span class="alert-badge alert-info">Capacity: ${shelter.capacity}</span>
+                            <span class="alert-badge alert-warning">Occupied: ${shelter.currentOccupancy}</span>
+                        </div>
+                        <p class="mt-2"><strong>Facilities:</strong> ${shelter.facilities || 'N/A'}</p>
+                        <p><strong>Contact:</strong> ${shelter.contactNumber}</p>
+                        <button class="btn btn-outline mt-2" 
+                            onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${shelter.latitude},${shelter.longitude}')"
+                            style="color: var(--primary-color); border-color: var(--primary-color);">Get Directions</button>
+                    `;
+                    sheltersList.appendChild(card);
+                });
+
+            } catch (error) {
+                console.error('Error loading shelters:', error);
+                utils.showToast('Failed to load shelters', 'error');
+                sheltersList.innerHTML = '<p class="text-center">Failed to load shelter data.</p>';
+            }
+
+            // Handle "Use My Location" button
+            document.getElementById('locate-btn').addEventListener('click', () => {
+                mapUtils.locateUser()
+                    .then(coords => {
+                        utils.showToast('Location found!', 'success');
+                        // In a real app, you might want to re-fetch nearby shelters here
+                    })
+                    .catch(err => {
+                        utils.showToast(err, 'error');
+                    });
+            });
+        });
+    </script>
+</body>
+
+</html>
