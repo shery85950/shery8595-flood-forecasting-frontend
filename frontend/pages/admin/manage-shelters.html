@@ -13,28 +13,46 @@
 
 <body>
     <div class="admin-container">
-        <h2>Manage Shelters</h2>
-        <button class="btn btn-primary" onclick="openModal('addShelterModal')"><i class="fas fa-plus"></i> Add
-            New Shelter</button>
-    </div>
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-water"></i> Admin</h2>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a href="/dashboard"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
+                <li><a href="/manage-alerts"><i class="fas fa-bell"></i> <span>Alerts</span></a></li>
+                <li><a href="/manage-shelters" class="active"><i class="fas fa-home"></i> <span>Shelters</span></a></li>
+                <li><a href="/manage-helplines"><i class="fas fa-phone"></i> <span>Helplines</span></a></li>
+                <li><a href="/view-reports"><i class="fas fa-file-alt"></i> <span>Reports</span></a></li>
+                <li><a href="/"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></a></li>
+            </ul>
+        </aside>
 
-    <div class="table-container">
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Location</th>
-                    <th>Capacity</th>
-                    <th>Contact</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Shelters will be loaded here dynamically -->
-            </tbody>
-        </table>
-    </div>
-    </main>
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="admin-header">
+                <h2>Manage Shelters</h2>
+                <button class="btn btn-primary" onclick="openModal('addShelterModal')"><i class="fas fa-plus"></i> Add
+                    New Shelter</button>
+            </div>
+
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Location</th>
+                            <th>Capacity</th>
+                            <th>Contact</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Shelters will be loaded here dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </main>
     </div>
 
     <!-- Add/Edit Shelter Modal -->
