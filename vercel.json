@@ -1,0 +1,8 @@
+{
+  "outputDirectory": "frontend",
+  "buildCommand": null,
+  "installCommand": null,
+  "rewrites": [
+    { "source": "/", "destination": "/pages/user/index.html" }
+  ]
+}
