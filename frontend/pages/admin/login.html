@@ -140,27 +140,60 @@
         .back-link:hover {
             color: var(--primary-color);
         }
+    </style>
+</head>
 
-        <div class="form-group"><label for="username">Username</label><div class="input-group"><input type="text" id="username" class="form-control" placeholder="Enter your username" required><i class="fas fa-user"></i></div></div><div class="form-group"><label for="password">Password</label><div class="input-group"><input type="password" id="password" class="form-control" placeholder="Enter your password" // Mock
-        login const username=document.getElementById('username').value;
+<body>
+    <div class="login-card">
+        <div class="login-header">
+            <div class="icon-bg">
+                <i class="fas fa-water"></i>
+            </div>
+            <h2>Welcome Back</h2>
+            <p class="text-muted">Sign in to FloodResponse Admin</p>
+        </div>
+        <form id="login-form">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <div class="input-group">
+                    <input type="text" id="username" class="form-control" placeholder="Enter your username" required>
+                    <i class="fas fa-user"></i>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <div class="input-group">
+                    <input type="password" id="password" class="form-control" placeholder="Enter your password"
+                        required>
+                    <i class="fas fa-lock"></i>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-login" style="width: 100%;">Sign In</button>
+        </form>
+        <a href="/" class="back-link"><i class="fas fa-arrow-left"></i> Back to Home</a>
+    </div>
 
-        if (username) {
-            const btn=e.target.querySelector('button');
-            const originalText=btn.innerText;
-            btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Signing In...';
-            btn.disabled=true;
+    <script src="../../js/utils.js"></script>
+    <script>
+        document.getElementById('login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            // Mock login
+            const username = document.getElementById('username').value;
+            if (username) {
+                const btn = e.target.querySelector('button');
+                const originalText = btn.innerText;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing In...';
+                btn.disabled = true;
 
-            setTimeout(()=> {
+                setTimeout(() => {
                     utils.showToast('Login successful', 'success');
-
-                    setTimeout(()=> {
-                            window.location.href='dashboard.html';
-                        }
-
-                        , 500);
-                }
-
-                , 1000);
-        }
+                    setTimeout(() => {
+                        window.location.href = '/dashboard';
+                    }, 500);
+                }, 1000);
+            }
         });
-        </script></body></html>
+    </script>
+</body>
+
+</html>
