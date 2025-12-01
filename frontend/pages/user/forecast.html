@@ -301,11 +301,17 @@
         function getRiskBadgeClass(riskLevel) {
             switch (riskLevel) {
                 case 'High Risk': return 'alert-critical';
-                case 'Medium Risk': return 'alert-warning';
                 case 'Low Risk': return 'alert-info';
                 default: return 'alert-secondary';
             }
         }
+
+        const regionMapping = {
+            'Punjab': ['Punjab', 'River Ravi', 'River Chenab', 'River Sutlej', 'River Jhelum', 'River Indus'],
+            'Sindh': ['Sindh', 'River Indus'],
+            'KPK': ['KPK', 'River Kabul', 'River Swat', 'River Indus'],
+            'Balochistan': ['Balochistan', 'River Indus']
+        };
 
         filterBtns.forEach(btn => {
             btn.addEventListener('click', () => {
@@ -316,7 +322,11 @@
                 if (filter === 'All Regions') {
                     renderDbForecasts(allDbForecasts);
                 } else {
-                    const filtered = allDbForecasts.filter(f => f.region === filter);
+                    const allowedRegions = regionMapping[filter] || [filter];
+                    const filtered = allDbForecasts.filter(f =>
+                        allowedRegions.includes(f.region) ||
+                        f.region.includes(filter)
+                    );
                     renderDbForecasts(filtered);
                 }
             });
