@@ -177,21 +177,32 @@
     <script>
         document.getElementById('login-form').addEventListener('submit', (e) => {
             e.preventDefault();
-            // Mock login
-            const username = document.getElementById('username').value;
-            if (username) {
-                const btn = e.target.querySelector('button');
-                const originalText = btn.innerText;
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing In...';
-                btn.disabled = true;
 
-                setTimeout(() => {
+            // Hardcoded credentials
+            const ADMIN_USERNAME = 'admin';
+            const ADMIN_PASSWORD = 'admin123';
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            const btn = e.target.querySelector('button');
+            const originalText = btn.innerText;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing In...';
+            btn.disabled = true;
+
+            setTimeout(() => {
+                // Validate credentials
+                if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
                     utils.showToast('Login successful', 'success');
                     setTimeout(() => {
                         window.location.href = '/dashboard';
                     }, 500);
-                }, 1000);
-            }
+                } else {
+                    utils.showToast('Invalid username or password', 'error');
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            }, 1000);
         });
     </script>
 </body>
