@@ -42,11 +42,58 @@
             <p class="text-muted">Locate safe shelters and evacuation points near you.</p>
         </div>
 
-        <div class="search-bar">
-            <input type="text" class="search-input" placeholder="Enter your location...">
+        <div class="search-bar" style="position: relative;">
+            <input type="text" id="location-search" class="search-input" placeholder="Enter your location...">
+            <div id="autocomplete-dropdown" style="display: none;"></div>
             <button class="btn btn-primary" id="locate-btn"><i class="fas fa-location-arrow"></i> Use My
                 Location</button>
         </div>
+
+        <style>
+            #autocomplete-dropdown {
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: white;
+                border: 1px solid #ddd;
+                border-top: none;
+                border-radius: 0 0 8px 8px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                max-height: 300px;
+                overflow-y: auto;
+                z-index: 1000;
+                margin-top: -1px;
+            }
+
+            .autocomplete-item {
+                padding: 12px 16px;
+                cursor: pointer;
+                border-bottom: 1px solid #f0f0f0;
+                transition: background-color 0.2s;
+            }
+
+            .autocomplete-item:last-child {
+                border-bottom: none;
+            }
+
+            .autocomplete-item:hover {
+                background-color: #f8f9fa;
+            }
+
+            .autocomplete-item i {
+                margin-right: 8px;
+                color: var(--primary-color);
+            }
+
+            .search-bar {
+                position: relative;
+            }
+
+            #location-search {
+                width: 100%;
+            }
+        </style>
 
         <div id="map"></div>
 
@@ -81,6 +128,9 @@
             // Initialize map centered on Lahore for demo
             const map = mapUtils.initMap('map', 31.5204, 74.3587, 12);
             const sheltersList = document.getElementById('shelters-list');
+            const searchInput = document.getElementById('location-search');
+            const autocompleteDropdown = document.getElementById('autocomplete-dropdown');
+            let debounceTimer;
 
             try {
                 // Fetch shelters from API
@@ -122,11 +172,96 @@
                 sheltersList.innerHTML = '<p class="text-center">Failed to load shelter data.</p>';
             }
 
+            // Handle location search input with autocomplete
+            searchInput.addEventListener('input', (e) => {
+                const query = e.target.value;
+
+                // Clear previous timer
+                clearTimeout(debounceTimer);
+
+                if (query.length < 3) {
+                    autocompleteDropdown.style.display = 'none';
+                    return;
+                }
+
+                // Debounce API calls
+                debounceTimer = setTimeout(async () => {
+                    try {
+                        const suggestions = await mapUtils.getSuggestions(query);
+
+                        if (suggestions.length > 0) {
+                            autocompleteDropdown.innerHTML = suggestions.map(suggestion => `
+                                <div class="autocomplete-item" data-lat="${suggestion.lat}" data-lng="${suggestion.lng}" data-name="${suggestion.name}">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    ${suggestion.name}
+                                </div>
+                            `).join('');
+                            autocompleteDropdown.style.display = 'block';
+
+                            // Add click handlers to suggestions
+                            autocompleteDropdown.querySelectorAll('.autocomplete-item').forEach(item => {
+                                item.addEventListener('click', () => {
+                                    const lat = parseFloat(item.dataset.lat);
+                                    const lng = parseFloat(item.dataset.lng);
+                                    const name = item.dataset.name;
+
+                                    searchInput.value = name;
+                                    autocompleteDropdown.style.display = 'none';
+
+                                    // Update map
+                                    map.setView([lat, lng], 13);
+                                    L.marker([lat, lng]).addTo(map)
+                                        .bindPopup(`<b>${name}</b>`).openPopup();
+
+                                    utils.showToast('Location found!', 'success');
+                                });
+                            });
+                        } else {
+                            autocompleteDropdown.style.display = 'none';
+                        }
+                    } catch (error) {
+                        console.error('Error fetching suggestions:', error);
+                        autocompleteDropdown.style.display = 'none';
+                    }
+                }, 300); // 300ms debounce
+            });
+
+            // Handle Enter key press
+            searchInput.addEventListener('keypress', async (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const query = searchInput.value.trim();
+
+                    if (!query) {
+                        utils.showToast('Please enter a location', 'error');
+                        return;
+                    }
+
+                    autocompleteDropdown.style.display = 'none';
+
+                    try {
+                        const location = await mapUtils.searchLocation(query);
+                        utils.showToast('Location found!', 'success');
+                        searchInput.value = location.name;
+                    } catch (error) {
+                        utils.showToast(error.message, 'error');
+                    }
+                }
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!searchInput.contains(e.target) && !autocompleteDropdown.contains(e.target)) {
+                    autocompleteDropdown.style.display = 'none';
+                }
+            });
+
             // Handle "Use My Location" button
             document.getElementById('locate-btn').addEventListener('click', () => {
                 mapUtils.locateUser()
                     .then(coords => {
                         utils.showToast('Location found!', 'success');
+                        searchInput.value = 'Your current location';
                         // In a real app, you might want to re-fetch nearby shelters here
                     })
                     .catch(err => {
