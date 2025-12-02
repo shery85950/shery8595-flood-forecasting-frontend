@@ -131,28 +131,50 @@
             const searchInput = document.getElementById('location-search');
             const autocompleteDropdown = document.getElementById('autocomplete-dropdown');
             let debounceTimer;
+            let allShelters = []; // Store all shelters globally
 
-            try {
-                // Fetch shelters from API
-                const shelters = await api.getShelters();
+            // Function to calculate distance between two coordinates (Haversine formula)
+            function calculateDistance(lat1, lon1, lat2, lon2) {
+                const R = 6371; // Radius of the Earth in kilometers
+                const dLat = (lat2 - lat1) * Math.PI / 180;
+                const dLon = (lon2 - lon1) * Math.PI / 180;
+                const a =
+                    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                const distance = R * c; // Distance in kilometers
+                return distance;
+            }
 
-                // Clear loading state/static content
+            // Function to render shelters list
+            function renderShelters(shelters, userLat = null, userLng = null) {
                 sheltersList.innerHTML = '';
 
-                shelters.forEach(shelter => {
-                    // Add marker to map
-                    mapUtils.addMarker(
-                        shelter.latitude,
-                        shelter.longitude,
-                        `<b>${shelter.name}</b><br>Capacity: ${shelter.capacity}<br>Contact: ${shelter.contactNumber}`
-                    );
+                // Calculate distances if user location is provided
+                if (userLat !== null && userLng !== null) {
+                    shelters = shelters.map(shelter => ({
+                        ...shelter,
+                        distance: calculateDistance(userLat, userLng, shelter.latitude, shelter.longitude)
+                    }));
 
-                    // Add card to list
+                    // Sort by distance (nearest first)
+                    shelters.sort((a, b) => a.distance - b.distance);
+                }
+
+                shelters.forEach(shelter => {
                     const card = document.createElement('div');
                     card.className = 'card';
+
+                    let distanceInfo = '';
+                    if (shelter.distance !== undefined) {
+                        distanceInfo = `<p class="text-muted"><i class="fas fa-route"></i> Distance: ${shelter.distance.toFixed(2)} km</p>`;
+                    }
+
                     card.innerHTML = `
                         <h3><i class="fas fa-campground text-primary"></i> ${shelter.name}</h3>
                         <p class="text-muted"><i class="fas fa-map-marker-alt"></i> ${shelter.address}</p>
+                        ${distanceInfo}
                         <div class="mt-2">
                             <span class="alert-badge alert-info">Capacity: ${shelter.capacity}</span>
                             <span class="alert-badge alert-warning">Occupied: ${shelter.currentOccupancy}</span>
@@ -165,6 +187,26 @@
                     `;
                     sheltersList.appendChild(card);
                 });
+            }
+
+            try {
+                // Fetch shelters from API
+                allShelters = await api.getShelters();
+
+                // Clear loading state/static content
+                sheltersList.innerHTML = '';
+
+                allShelters.forEach(shelter => {
+                    // Add marker to map
+                    mapUtils.addMarker(
+                        shelter.latitude,
+                        shelter.longitude,
+                        `<b>${shelter.name}</b><br>Capacity: ${shelter.capacity}<br>Contact: ${shelter.contactNumber}`
+                    );
+                });
+
+                // Render shelters initially (without sorting)
+                renderShelters(allShelters);
 
             } catch (error) {
                 console.error('Error loading shelters:', error);
@@ -213,7 +255,10 @@
                                     L.marker([lat, lng]).addTo(map)
                                         .bindPopup(`<b>${name}</b>`).openPopup();
 
-                                    utils.showToast('Location found!', 'success');
+                                    // Re-render shelters sorted by distance
+                                    renderShelters(allShelters, lat, lng);
+
+                                    utils.showToast('Location found! Shelters sorted by distance.', 'success');
                                 });
                             });
                         } else {
@@ -241,8 +286,11 @@
 
                     try {
                         const location = await mapUtils.searchLocation(query);
-                        utils.showToast('Location found!', 'success');
+                        utils.showToast('Location found! Shelters sorted by distance.', 'success');
                         searchInput.value = location.name;
+
+                        // Re-render shelters sorted by distance
+                        renderShelters(allShelters, location.lat, location.lng);
                     } catch (error) {
                         utils.showToast(error.message, 'error');
                     }
@@ -260,9 +308,11 @@
             document.getElementById('locate-btn').addEventListener('click', () => {
                 mapUtils.locateUser()
                     .then(coords => {
-                        utils.showToast('Location found!', 'success');
+                        utils.showToast('Location found! Shelters sorted by distance.', 'success');
                         searchInput.value = 'Your current location';
-                        // In a real app, you might want to re-fetch nearby shelters here
+
+                        // Re-render shelters sorted by distance
+                        renderShelters(allShelters, coords.lat, coords.lng);
                     })
                     .catch(err => {
                         utils.showToast(err, 'error');
