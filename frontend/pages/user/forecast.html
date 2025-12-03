@@ -98,8 +98,23 @@
         </div>
 
         <!-- 3-Day Forecast -->
-        <div class="filters mb-4">
+        <div class="filters mb-4" style="display: flex; justify-content: space-between; align-items: center;">
             <h3><i class="fas fa-calendar-week"></i> 3-Day Forecast</h3>
+            <button id="ai-analysis-btn" class="btn btn-primary">
+                <i class="fas fa-robot"></i> Get AI Analysis
+            </button>
+        </div>
+
+        <!-- AI Analysis Result -->
+        <div id="ai-analysis-result" class="mb-4" style="display: none;">
+            <div class="card" style="border-left: 5px solid #667eea;">
+                <h4><i class="fas fa-robot"></i> AI Weather Analysis</h4>
+                <div id="ai-content">
+                    <div class="text-center py-3">
+                        <i class="fas fa-spinner fa-spin"></i> Analyzing weather data...
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="card-grid" id="forecast-container"
@@ -137,6 +152,7 @@
 
     <script src="../../js/utils.js"></script>
     <script src="../../js/api.js"></script>
+    <script src="../../js/ai_agent.js"></script>
     <script>
         const WEATHER_API_KEY = '5523bf8add464255b93210055252911';
         const WEATHER_API_BASE = 'https://api.weatherapi.com/v1';
@@ -171,6 +187,7 @@
                 );
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const data = await response.json();
+                window.lastWeatherData = data;
                 displayCurrentWeather(data);
                 displayForecast(data);
             } catch (error) {
@@ -335,6 +352,43 @@
         document.addEventListener('DOMContentLoaded', () => {
             getUserLocation();
             fetchDbForecasts();
+
+            document.getElementById('ai-analysis-btn').addEventListener('click', async () => {
+                const resultDiv = document.getElementById('ai-analysis-result');
+                const contentDiv = document.getElementById('ai-content');
+
+                resultDiv.style.display = 'block';
+                contentDiv.innerHTML = `
+                    <div class="text-center py-3">
+                        <i class="fas fa-spinner fa-spin"></i> Analyzing weather data...
+                    </div>
+                `;
+
+                if (!window.lastWeatherData) {
+                    contentDiv.innerHTML = '<p class="text-danger">No weather data available to analyze.</p>';
+                    return;
+                }
+
+                const analysis = await getAIForecastAnalysis(window.lastWeatherData);
+
+                let badgeClass = 'alert-secondary';
+                if (analysis.warning_level.toLowerCase().includes('high') || analysis.warning_level.toLowerCase().includes('critical')) {
+                    badgeClass = 'alert-critical';
+                } else if (analysis.warning_level.toLowerCase().includes('medium')) {
+                    badgeClass = 'alert-warning';
+                } else if (analysis.warning_level.toLowerCase().includes('low')) {
+                    badgeClass = 'alert-info';
+                }
+
+                contentDiv.innerHTML = `
+                    <div class="mt-3">
+                        <span class="alert-badge ${badgeClass}" style="font-size: 1rem; margin-bottom: 10px; display: inline-block;">
+                            Warning Level: ${analysis.warning_level}
+                        </span>
+                        <p style="font-size: 1.1rem; line-height: 1.6;">${analysis.summary}</p>
+                    </div>
+                `;
+            });
         });
     </script>
 </body>
