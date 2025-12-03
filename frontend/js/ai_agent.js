@@ -6,8 +6,8 @@
 
 const AI_CONFIG = {
     HF_API_KEY: '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',
-    HF_API_URL: 'https://api.huggingface.co/v1/chat/completions',
-    MODEL: 'SentientAGI/Dobby-Unhinged-Llama-3.3-70B:fireworks-ai',
+    HF_API_URL: 'https://api-inference.huggingface.co/models/SentientAGI/Dobby-Unhinged-Llama-3.3-70B',
+    MODEL: 'SentientAGI/Dobby-Unhinged-Llama-3.3-70B',
     WEATHER_API_KEY: '5523bf8add464255b93210055252911',
     WEATHER_API_BASE: 'https://api.weatherapi.com/v1'
 };
@@ -100,7 +100,7 @@ async function generateWarningWithAI(weatherData) {
     // Prepare prompt for the AI
     const prompt = createAnalysisPrompt(weatherData);
 
-    // Call Hugging Face API
+    // Call Hugging Face Inference API
     const response = await fetch(AI_CONFIG.HF_API_URL, {
         method: 'POST',
         headers: {
@@ -108,19 +108,12 @@ async function generateWarningWithAI(weatherData) {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-            model: AI_CONFIG.MODEL,
-            messages: [
-                {
-                    role: 'system',
-                    content: 'You are an expert meteorologist and flood risk analyst for Pakistan. Analyze weather forecasts and provide accurate flood risk assessments with actionable recommendations. Always respond with valid JSON only, no additional text.'
-                },
-                {
-                    role: 'user',
-                    content: prompt
-                }
-            ],
-            temperature: 0.3,
-            max_tokens: 1000
+            inputs: `You are an expert meteorologist and flood risk analyst for Pakistan. Analyze weather forecasts and provide accurate flood risk assessments with actionable recommendations. Always respond with valid JSON only, no additional text.\n\n${prompt}`,
+            parameters: {
+                max_new_tokens: 1000,
+                temperature: 0.3,
+                return_full_text: false
+            }
         })
     });
 
@@ -131,8 +124,8 @@ async function generateWarningWithAI(weatherData) {
 
     const result = await response.json();
 
-    // Access content using .content property (OpenAI-style API)
-    const aiResponse = result.choices[0].message.content;
+    // Hugging Face inference API returns array with generated_text
+    const aiResponse = Array.isArray(result) ? result[0].generated_text : result.generated_text;
 
     // Parse the AI response
     return parseAIResponse(aiResponse);
