@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://shery85950-shery8595-flood-forecasting-backend-production.up.railway.app/api';
+const API_BASE_URL = 'https://flood-forecast-backend-production.up.railway.app/api';
 
 const api = {
     // Alerts
@@ -23,7 +23,7 @@ const api = {
             method: 'DELETE'
         });
     },
-
+    
     // Shelters
     getShelters: async () => {
         const response = await fetch(`${API_BASE_URL}/shelters`);
@@ -54,7 +54,7 @@ const api = {
             method: 'DELETE'
         });
     },
-
+    
     // Forecasts
     getForecasts: async () => {
         const response = await fetch(`${API_BASE_URL}/forecasts`);
@@ -64,7 +64,12 @@ const api = {
         const response = await fetch(`${API_BASE_URL}/forecasts/latest`);
         return response.json();
     },
-
+    getLocationReport: async (location) => {
+        const response = await fetch(`${API_BASE_URL}/forecasts/location-report?location=${encodeURIComponent(location)}`);
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
+        return response.json();
+    },
+    
     // Helplines
     getHelplines: async () => {
         const response = await fetch(`${API_BASE_URL}/helplines`);
@@ -83,7 +88,7 @@ const api = {
             method: 'DELETE'
         });
     },
-
+    
     // Reports
     getReports: async () => {
         const response = await fetch(`${API_BASE_URL}/reports`);
@@ -98,5 +103,3 @@ const api = {
         return response.json();
     }
 };
-
-
